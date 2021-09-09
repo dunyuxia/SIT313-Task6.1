@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client-Server Web Applications</title>
+    <style>
+        .box {
+            width: auto;
+            height: 150px;
+            background-color: azure;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .item {
+            width: 300px;
+            margin: 0 40px;
+        }
+
+        .item-3 {
+            width: 500px;
+            margin: 0 40px;
+        }
+
+        .add-box {
+            width: 500px;
+            height: 300px;
+            margin: 50px auto;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            padding: 10px;
+            display: none;
+            position: relative;
+            color: #999;
+        }
+
+        .change-box {
+            width: 100%;
+            height: 100%;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            padding: 10px;
+            display: none;
+            position: fixed;
+            color: #999;
+            background-color: black;
+            top: 0;
+            left: 0;
+            z-index: 999;
+            opacity: 0.9;
+        }
+
+        .add-item {
+            width: 350px;
+            height: 50px;
+            margin: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .change-item {
+            width: 350px;
+            height: 50px;
+            margin: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .close {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            text-align: center;
+            line-height: 30px;
+            background-color: red;
+            opacity: 0.8;
+            top: -15px;
+            right: -15px;
+            border-radius: 50%;
+            cursor: pointer;
+            color: white;
+        }
+
+        .user-box {
+            width: 550px;
+            height: 300px;
+            margin: 50px auto;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            justify-content: center;
+            align-items: center;
+            display: none;
+            color: #666;
+            font-size: 14px;
+            background-color: #f7f7f7;
+        }
+
+        .user-item {
+            width: 250px;
+            height: 150px;
+            padding: 10px;
+            border: 1px solid slategrey;
+            background-color: white;
+        }
+
+        .all-box {
+            width: 100%;
+            display: none;
+            justify-content: space-around;
+            align-items: center;
+            background: #f7f7f7;
+        }
+        .all-item {
+            width: 300px;
+            height: 210px;
+            border: 1px solid #ccc;
+            border-radius: 15px;
+            padding: 10px;
+            background-color: azure;
+            box-shadow: 5px 5px 5px #ccc;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="box">
+        <div class="item">add new user：<button id="addbtn">Add</button></div>
+        <div class="item-3">search single user：<input id="oneinput" type="text"><button id="onebtn">Search One</button>
+        </div>
+        <div class="item">search all user：<button id="allbtn">Search All</button></div>
+    </div>
+
+    <div class="add-box">
+        <div class="add-item">user name：<input id="name" type="text"></div>
+        <div class="add-item">user password：<input id="pwd" type="password"></div>
+        <div class="add-item">user phone: <input id="phone" type="number"></div>
+        <div class="add-item">user address: <input id="address" type="text"></div>
+        <div class="add-item"><button id="submitbtn">submit</button></div>
+        <div class="close">X</div>
+    </div>
+
+    <div class="user-box"></div>
+
+    <div class="change-box">
+        <div class="change-item">user name：<input id="name2" type="text" readonly></div>
+        <div class="change-item">user password：<input id="pwd2" type="password"></div>
+        <div class="change-item">user phone: <input id="phone2" type="number"></div>
+        <div class="change-item">user address: <input id="address2" type="text"></div>
+        <div class="change-item"><button id="updatebtn">update</button></div>
+    </div>
+
+    <div class="all-box"></div>
+
+    <script src="./javascripts/axios.min.js"></script>
+    <script>
+        let addbtn = document.getElementById('addbtn')
+        let onebtn = document.getElementById('onebtn')
+        let oneinput = document.getElementById('oneinput')
+        let allbtn = document.getElementById('allbtn')
+
+        let name = document.getElementById('name')
+        let pwd = document.getElementById('pwd')
+        let phone = document.getElementById('phone')
+        let address = document.getElementById('address')
+        let submitbtn = document.getElementById('submitbtn')
+
+        let name2 = document.getElementById('name2')
+        let pwd2 = document.getElementById('pwd2')
+        let phone2 = document.getElementById('phone2')
+        let address2 = document.getElementById('address2')
+        let updatebtn = document.getElementById('updatebtn')
+
+        let addBox = document.querySelector('.add-box')
+        let changeBox = document.querySelector('.change-box')
+        let close = document.querySelector('.close')
+
+        let userBox = document.querySelector('.user-box')
+        let allBox = document.querySelector('.all-box')
+
+        addbtn.onclick = function () {
+            userBox.style.display = 'none'
+            addBox.style.display = 'block'
+            allBox.style.display = 'none'
+        }
+        close.onclick = function () {
+            addBox.style.display = 'none'
+        }
+
+        submitbtn.onclick = function () {
+            if (name.value == '' || pwd.value == '' || phone.value == '' || address.value == '') {
+                alert('can not be empty')
+                return
+            }
+
+            let userinfo = {
+                name: name.value,
+                pwd: pwd.value,
+                phone: phone.value,
+                address: address.value
+            }
+
+            axios.post('/adduser', userinfo)
+                .then(function (response) {
+                    if (response.data == '500') {
+                        alert('This user has been registered')
+                    }
+                    if (response.data == '200') {
+                        alert('Add user success')
+                        addBox.style.display = 'none'
+                    }
+                })
+                .catch(function (error) {
+                    console.log(error);
+                });
+        }
+
+        onebtn.onclick = function () {
+            addBox.style.display = 'none'
+            allBox.style.display = 'none'
+
+            if (oneinput.value == '') {
+                alert('can not be empty')
+                return
+            }
+
+            axios.get(`/searchone?one=${oneinput.value}`).then((res) => {
+                console.log(res.data)
+                if (res.data == '404') {
+                    alert('user not exist')
+                    return
+                } else {
+                    userBox.style.display = 'flex'
+                    userBox.innerHTML = ''
+                    userBox.insertAdjacentHTML('beforeEnd', `
+                        <div class="user-item">
+                            <div>username: ${res.data[0].name}</div>
+                            <div>userpassword: ${res.data[0].pwd}</div>
+                            <div>userphone: ${res.data[0].phone}</div>
+                            <div>useraddress: ${res.data[0].address}</div>
+                            <div><button id="changebtn">change</button> <button id="delbtn">delete</button></div>
+                        </div>
+                    `)
+                    let delbtn = document.getElementById('delbtn')
+                    delbtn.onclick = function () {
+                        console.log('delete');
+                        axios.get(`/deleteone?one=${res.data[0].name}`).then((resd) => {
+                            console.log('ddd');
+                            alert('delete success')
+                            userBox.style.display = 'none'
+                        }).catch((errr) => {
+                            console.log(errr);
+                        })
+                    }
+
+                    let changebtn = document.getElementById('changebtn')
+                    changebtn.onclick = function () {
+                        changeBox.style.display = 'block'
+                        name2.value = res.data[0].name
+                        pwd2.value = res.data[0].pwd
+                        phone2.value = res.data[0].phone
+                        address2.value = res.data[0].address
+
+                        updatebtn.onclick = function () {
+                            if (name2.value == '' || pwd2.value == '' || phone2.value == '' || address2.value == '') {
+                                alert('can not be empty')
+                                return
+                            }
+
+                            let userinfo2 = {
+                                name: name2.value,
+                                pwd: pwd2.value,
+                                phone: phone2.value,
+                                address: address2.value
+                            }
+
+                            axios.post('/updateone', userinfo2).then((resu) => {
+                                alert('update success')
+                                location.reload();
+                            })
+                        }
+
+
+                    }
+                }
+            }).catch((err) => {
+                console.log(err)
+            })
+
+        }
+
+        allbtn.onclick = function () {
+            addBox.style.display = 'none'
+            userBox.style.display = 'none'
+            allBox.style.display = 'flex'
+            allBox.innerHTML = ''
+
+            axios.get('/showall').then((response) => {
+                let arr = response.data
+                for(let i = 0; i < arr.length; i++) {
+                    allBox.insertAdjacentHTML('beforeEnd', `
+                    <div class="all-item">
+                        <div>username: ${arr[i].name}</div>
+                        <div>userpassword: ${arr[i].pwd}</div>
+                        <div>userphone: ${arr[i].phone}</div>
+                        <div>useraddress: ${arr[i].address}</div>     
+                    </div>
+                `)
+                }
+                
+            })
+        }
+    </script>
+</body>
+
+</html>
